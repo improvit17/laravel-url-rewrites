@@ -35,7 +35,13 @@ class UrlRewriteController
 
     protected function forwardResponse($url)
     {
-        $url = tenant()->route('cats.index') . '/'.ltrim($url, '/');
+        $target = ltrim($url, '/');
+        // Encode padsegmenten zodat spaties, komma's en andere tekens in id's
+        // (bijv. AFAS-categorie "PS 4,8") niet als losse URI-tekens worden geïnterpreteerd,
+        // en trim eventuele trailing whitespace/control chars die Symfony's strikte
+        // Request::create()-validatie zou blokkeren.
+        $target = implode('/', array_map('rawurlencode', explode('/', $target)));
+        $url = trim(tenant()->route('cats.index') . '/' . $target);
 
         return Route::dispatch(
             Request::create(
