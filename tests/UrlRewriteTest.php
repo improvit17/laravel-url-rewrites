@@ -4,6 +4,8 @@ namespace RuthgerIdema\UrlRewrite\Test;
 
 use Illuminate\Support\Facades\Route;
 use RuthgerIdema\UrlRewrite\Facades\UrlRewrite;
+use RuthgerIdema\UrlRewrite\Http\UrlRewriteController;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UrlRewriteTest extends TestCase
 {
@@ -74,6 +76,32 @@ class UrlRewriteTest extends TestCase
         $urlRewrite = UrlRewrite::create('test-request-path', 'test-target-path');
         UrlRewrite::delete($urlRewrite->id);
         $this->assertCount(0, UrlRewrite::all());
+    }
+
+    /**
+     * Een request dat naar een leeg pad decodeert (zoals "/%2f") laat Laravel de lege
+     * {url}-parameter wegfilteren, waardoor de controller zonder argument werd aangeroepen.
+     * Dat moet een nette 404 opleveren i.p.v. een ArgumentCountError/500.
+     *
+     * @test
+     */
+    public function it_returns_a_404_when_invoked_without_a_url()
+    {
+        $controller = $this->app->make(UrlRewriteController::class);
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $controller();
+    }
+
+    /** @test */
+    public function it_returns_a_404_for_an_empty_url()
+    {
+        $controller = $this->app->make(UrlRewriteController::class);
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $controller('');
     }
 
     /** @test */
