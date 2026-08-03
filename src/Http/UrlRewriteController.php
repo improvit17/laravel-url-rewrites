@@ -20,8 +20,15 @@ class UrlRewriteController
         $this->repository = $repository;
     }
 
-    public function __invoke($url): object
+    public function __invoke($url = ''): object
     {
+        // Een request dat naar een leeg pad decodeert (bijv. "/%2f" van scan-/probe-verkeer)
+        // levert een lege of ontbrekende {url}-parameter op. Val dan netjes terug op een 404
+        // in plaats van een ArgumentCountError/500.
+        if ($url === '' || $url === null) {
+            abort(404);
+        }
+
         if (! $urlRewrite = $this->repository->getByRequestPath($url)) {
             abort(404);
         }
