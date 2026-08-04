@@ -44,11 +44,15 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
     protected function registerRouteMacro(): void
     {
-        $queryParam = '.*';
+        // Eis minstens een teken (.+, niet .*) zodat de catch-all rewrite-route een lege
+        // {url} niet matcht. Een request dat naar een leeg pad decodeert (bijv. "/%2f" van
+        // scan-/probe-verkeer) valt zo op routing-niveau al netjes door naar een 404 in plaats
+        // van de rewrite-controller met een lege parameter te raken.
+        $queryParam = '.+';
 
         if (class_exists('Laravel\\Nova\\Nova')) {
             $novaPath = ltrim($this->app['config']['nova']['path'], '/');
-            $queryParam = "^(?!$novaPath).*";
+            $queryParam = "^(?!$novaPath).+";
         }
 
         $router = $this->app['router'];
