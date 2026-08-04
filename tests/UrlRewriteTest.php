@@ -104,6 +104,24 @@ class UrlRewriteTest extends TestCase
         $controller('');
     }
 
+    /**
+     * De catch-all rewrite-route mag een lege {url} niet meer matchen. De constraint eist
+     * daarom minstens een teken (.+), zodat een leeg pad (bijv. van "/%2f") al op routing-niveau
+     * doorvalt naar een 404 i.p.v. de rewrite-controller met een lege parameter te raken.
+     *
+     * @test
+     */
+    public function the_rewrite_route_constraint_does_not_match_an_empty_url()
+    {
+        Route::rewrites();
+
+        $route = collect(Route::getRoutes()->getRoutes())
+            ->first(fn ($route) => $route->getName() === 'url.rewrite');
+
+        $this->assertNotNull($route, 'De rewrite-route hoort geregistreerd te zijn.');
+        $this->assertEquals('.+', $route->wheres['url']);
+    }
+
     /** @test */
     public function it_can_regenerate_an_url_rewrite()
     {
